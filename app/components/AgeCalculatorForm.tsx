@@ -197,7 +197,7 @@ export default function AgeCalculatorForm() {
                 required: "Campo obrigatório",
                 valueAsNumber: true,
                 min: {
-                  value: -4540000000,
+                  value: -4540000000, // Idade da terra
                   message: "Ano mínimo é -4540000000",
                 },
                 max: {
