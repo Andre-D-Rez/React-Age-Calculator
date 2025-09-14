@@ -33,6 +33,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        {/*
+          <nav className="w-full bg-white border-b">
+            <div className="container mx-auto flex gap-4 p-3">
+              <NavLink to="/" end className={({isActive}) => isActive ? 'text-purple-600' : 'text-gray-600'}>
+                Idade
+              </NavLink>
+              <NavLink to="/event" className={({isActive}) => isActive ? 'text-purple-600' : 'text-gray-600'}>
+                Evento
+              </NavLink>
+            </div>
+          </nav>
+        */}
         {children}
         <ScrollRestoration />
         <Scripts />

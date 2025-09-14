@@ -9,6 +9,38 @@ type FormValues = {
   year: number | string;
 };
 
+/* Calculadora de eventos futuros (contagem regressiva)
+  // type Mode = 'age' | 'countdown';
+  // type AgeCalculatorFormProps = { mode?: Mode };
+  // export default function AgeCalculatorForm({ mode = 'age' }: AgeCalculatorFormProps) {
+  //   ...
+  // }
+  //
+  // {...register('year', {
+  //   ...regrasComuns,
+  //   validate: (v) => {
+  //     const y = Number(v), m = Number(watch('month')), d = Number(watch('day'));
+  //     if (!isValidDate(d, m, y)) return 'Data inválida';
+  //     const hoje = new Date();
+  //     const evento = new Date(y, m - 1, d);
+  //     if (mode === 'age' && evento > hoje) return 'Data não pode ser futura';
+  //     if (mode === 'countdown' && evento < hoje) return 'Data do evento não pode ser passada';
+  //     return true;
+  //   }
+  // })}
+  //
+  // const onSubmit = (data: FormValues) => {
+  //   const day = Number(data.day); const month = Number(data.month); const year = Number(data.year);
+  //   const now = new Date();
+  //   if (mode === 'age') {
+  //     setResult(diffYMD({ day, month, year }, now));
+  //   } else {
+  //     const to = new Date(year, month - 1, day);
+  //     setResult(diffYMD({ day: now.getDate(), month: now.getMonth() + 1, year: now.getFullYear() }, to));
+  //   }
+  // };
+*/
+
 export default function AgeCalculatorForm() {
   const today = React.useMemo(() => new Date(), []);
   const {
@@ -16,6 +48,7 @@ export default function AgeCalculatorForm() {
     handleSubmit,
     watch,
     formState: { errors },
+    setError,
   } = useForm<FormValues>({
     mode: "onBlur",
     defaultValues: { day: "", month: "", year: "" },
@@ -44,10 +77,22 @@ export default function AgeCalculatorForm() {
     const month = Number(data.month);
     const year = Number(data.year);
     if (!isValidDate(day, month, year)) return;
-    const diff = diffYMD({ day, month, year }, today);
+    // Bloquear datas futuras
+    const now = new Date();
+    const nowY = now.getFullYear();
+    const nowM = now.getMonth() + 1;
+    const nowD = now.getDate();
+    const isFuture =
+      year > nowY ||
+      (year === nowY && (month > nowM || (month === nowM && day > nowD)));
+    if (isFuture) {
+      setError("year", { type: "validate", message: "Data não pode ser no futuro" });
+      return;
+    }
+    const diff = diffYMD({ day, month, year }, now);
     setResult(diff);
     lastSubmittedRef.current = { day, month, year };
-  }, [today]);
+  }, [setError]);
 
   const maxDay = React.useMemo(
     () => (wMonth >= 1 && wMonth <= 12 ? getDaysInMonth(wMonth, wYear) : 31),
@@ -88,10 +133,18 @@ export default function AgeCalculatorForm() {
                   const month = Number(watch("month"));
                   const year = Number(watch("year"));
                   if (!month || !year) return true; // validar por campo quando outros faltam
-                  return (
-                    isValidDate(day, month, year) ||
-                    "Data inválida para este mês/ano"
-                  );
+                  if (!isValidDate(day, month, year)) {
+                    return "Data inválida para este mês/ano";
+                  }
+                  // Checagem de futuro
+                  const now = new Date();
+                  const nowY = now.getFullYear();
+                  const nowM = now.getMonth() + 1;
+                  const nowD = now.getDate();
+                  const isFuture =
+                    year > nowY ||
+                    (year === nowY && (month > nowM || (month === nowM && day > nowD)));
+                  return isFuture ? "Data não pode ser no futuro" : true;
                 },
               })}
             />
@@ -156,7 +209,16 @@ export default function AgeCalculatorForm() {
                   const month = Number(watch("month"));
                   const day = Number(watch("day"));
                   if (!day || !month) return true;
-                  return isValidDate(day, month, year) || "Data inválida";
+                  if (!isValidDate(day, month, year)) return "Data inválida";
+                  // Checagem de futuro
+                  const now = new Date();
+                  const nowY = now.getFullYear();
+                  const nowM = now.getMonth() + 1;
+                  const nowD = now.getDate();
+                  const isFuture =
+                    year > nowY ||
+                    (year === nowY && (month > nowM || (month === nowM && day > nowD)));
+                  return isFuture ? "Data não pode ser no futuro" : true;
                 },
               })}
             />
