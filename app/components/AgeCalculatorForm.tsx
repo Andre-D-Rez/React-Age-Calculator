@@ -10,7 +10,7 @@ type FormValues = {
 };
 
 export default function AgeCalculatorForm() {
-  const today = new Date();
+  const today = React.useMemo(() => new Date(), []);
   const {
     register,
     handleSubmit,
@@ -21,26 +21,38 @@ export default function AgeCalculatorForm() {
     defaultValues: { day: "", month: "", year: "" },
   });
 
+  // Acessibilidade: IDs únicos para inputs/labels
+  const dayId = React.useId();
+  const monthId = React.useId();
+  const yearId = React.useId();
+
   const wMonth = Number(watch("month")) || 0;
   const wYear = Number(watch("year")) || today.getFullYear();
+  const dayVal = watch("day");
+  const monthVal = watch("month");
+  const yearVal = watch("year");
 
   const [result, setResult] = React.useState<{
     years: number;
     months: number;
     days: number;
   } | null>(null);
+  const lastSubmittedRef = React.useRef<{ day: number; month: number; year: number } | null>(null);
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = React.useCallback((data: FormValues) => {
     const day = Number(data.day);
     const month = Number(data.month);
     const year = Number(data.year);
     if (!isValidDate(day, month, year)) return;
     const diff = diffYMD({ day, month, year }, today);
     setResult(diff);
-  };
+    lastSubmittedRef.current = { day, month, year };
+  }, [today]);
 
-  const maxDay =
-    wMonth >= 1 && wMonth <= 12 ? getDaysInMonth(wMonth, wYear) : 31;
+  const maxDay = React.useMemo(
+    () => (wMonth >= 1 && wMonth <= 12 ? getDaysInMonth(wMonth, wYear) : 31),
+    [wMonth, wYear]
+  );
 
   const yearsVal = result?.years ?? "--";
   const monthsVal = result?.months ?? "--";
@@ -51,12 +63,13 @@ export default function AgeCalculatorForm() {
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="grid grid-cols-3 gap-4 sm:gap-6">
           <div className="flex-1">
-            <label className="block text-xs tracking-[0.3em] text-gray-600 mb-1 uppercase">
+            <label htmlFor={dayId} className="block text-xs tracking-[0.3em] text-gray-600 mb-1 uppercase">
               DAY
             </label>
             <input
               type="number"
               placeholder="DD"
+              id={dayId}
               className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 text-gray-900 placeholder:text-gray-400 ${
                 errors.day
                   ? "border-red-500 focus:ring-red-400"
@@ -65,10 +78,7 @@ export default function AgeCalculatorForm() {
               {...register("day", {
                 required: "Campo obrigatório",
                 valueAsNumber: true,
-                min: {
-                  value: -4540000000,
-                  message: "Ano mínimo é -4540000000",
-                },
+                min: { value: 1, message: "Dia mínimo é 1" },
                 max: {
                   value: maxDay,
                   message: `Dia máximo para este mês/ano é ${maxDay}`,
@@ -92,12 +102,13 @@ export default function AgeCalculatorForm() {
             )}
           </div>
           <div className="flex-1">
-            <label className="block text-xs tracking-[0.3em] text-gray-600 mb-1 uppercase">
+            <label htmlFor={monthId} className="block text-xs tracking-[0.3em] text-gray-600 mb-1 uppercase">
               MONTH
             </label>
             <input
               type="number"
               placeholder="MM"
+              id={monthId}
               className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 text-gray-900 placeholder:text-gray-400 ${
                 errors.month
                   ? "border-red-500 focus:ring-red-400"
@@ -117,12 +128,13 @@ export default function AgeCalculatorForm() {
             )}
           </div>
           <div className="flex-1">
-            <label className="block text-xs tracking-[0.3em] text-gray-600 mb-1 uppercase">
+            <label htmlFor={yearId} className="block text-xs tracking-[0.3em] text-gray-600 mb-1 uppercase">
               YEAR
             </label>
             <input
               type="number"
               placeholder="YYYY"
+              id={yearId}
               className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 text-gray-900 placeholder:text-gray-400 ${
                 errors.year
                   ? "border-red-500 focus:ring-red-400"
